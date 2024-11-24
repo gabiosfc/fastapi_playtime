@@ -43,7 +43,7 @@ preview = true
 quote-style = 'single'
 
 [tool.taskipy.tasks]
-run = 'fastapi dev fast_zero/app.py'
+run = 'fastapi dev fastapi_playtime/app.py'
 format = 'ruff check . --fix && ruff format .'
 
 [build-system]
