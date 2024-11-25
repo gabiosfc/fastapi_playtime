@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import Boolean, func
 from sqlalchemy.orm import Mapped, mapped_column, registry
 
-table_registry = registry()
+from .user import table_registry
 
 
 @table_registry.mapped_as_dataclass

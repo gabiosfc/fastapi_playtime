@@ -5,75 +5,74 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from fastapi_playtime.database import (
-    get_session,  # Importando o get_session existente
-)
+from fastapi_playtime.database import (get_session)
 from fastapi_playtime.models.agendamento import Agendamento
 from fastapi_playtime.models.quadra import Quadra
 from fastapi_playtime.models.user import User
-from fastapi_playtime.schemas.agendamento import (
-    AgendamentoCreate,
-    AgendamentoOut,
-)
+from fastapi_playtime.schemas.agendamento import AgendamentoCreate, AgendamentoOut
+from fastapi_playtime.security import get_current_user
 
 router = APIRouter(prefix='/agendamento', tags=['Agendamento'])
 
 T_Session = Annotated[Session, Depends(get_session)]
+T_CurrentUser = Annotated[User, Depends(get_current_user)]
 
-
-@router.post('/', response_model=AgendamentoOut, status_code=201)
-def create_agendamento(agendamento: AgendamentoCreate, db: T_Session):
-    # Validar se o usuário existe
-    user = db.query(User).filter(User.id == agendamento.user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail='Usuário não encontrado')
-
-    # Validar se a quadra existe
-    quadra = (
-        db.query(Quadra).filter(Quadra.id == agendamento.quadra_id).first()
-    )
+@router.post('/', response_model=AgendamentoOut, status_code=HTTPStatus.CREATED)
+def create_agendamento(
+    agendamento: AgendamentoCreate,
+    session: T_Session,
+    current_user: T_CurrentUser
+):
+    quadra = session.query(Quadra).filter(Quadra.id == agendamento.id_quadra).first()
     if not quadra:
-        raise HTTPException(status_code=404, detail='Quadra não encontrada')
-
-    # Validar se o horário está disponível
-    horario_inicio = agendamento.horario
-    horario_fim = horario_inicio + timedelta(hours=1)
-    conflito = (
-        db.query(Agendamento)
-        .filter(
-            Agendamento.quadra_id == agendamento.quadra_id,
-            Agendamento.horario >= horario_inicio,
-            Agendamento.horario < horario_fim,
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail='Quadra não encontrada'
         )
-        .first()
-    )
+        
+    if not quadra.disponivel:
+        raise HTTPException(
+            status_code=HTTPStatus.FORBIDDEN,
+            detail='Quadra não está disponível para agendamento'
+        )
+        
+    conflito = session.query(Agendamento).filter(
+        Agendamento.id_quadra == agendamento.id_quadra,
+        Agendamento.data == agendamento.data,
+        Agendamento.inicio < agendamento.fim,
+        Agendamento.fim > agendamento.inicio
+    ).first()
+    
     if conflito:
         raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST,
-            detail='Horário indisponível para esta quadra',
+            status_code=HTTPStatus.CONFLICT,
+            detail='Conflito de horário para esta quadra'
         )
-
-    # Criar agendamento
-    new_agendamento = Agendamento(
-        user_id=agendamento.user_id,
-        quadra_id=agendamento.quadra_id,
-        horario=agendamento.horario,
+        
+    novo_agendamento = Agendamento(
+        id_quadra=agendamento.id_quadra,
+        id_usuario=current_user.id,
+        data=agendamento.data,
+        inicio=agendamento.inicio,
+        fim=agendamento.fim,
     )
-    db.add(new_agendamento)
-    db.commit()
-    db.refresh(new_agendamento)
-    return new_agendamento
+    
+    session.add(novo_agendamento)
+    session.commit()
+    session.refresh(novo_agendamento)
+    
+    return novo_agendamento
 
 
 @router.get('/', response_model=list[AgendamentoOut])
-def list_agendamentos(db: T_Session):
-    return db.query(Agendamento).all()
+def list_agendamentos(session: T_Session):
+    return session.query(Agendamento).all()
 
 
 @router.get('/{agendamento_id}', response_model=AgendamentoOut)
-def get_agendamento(agendamento_id: int, db: T_Session):
+def get_agendamento(agendamento_id: int, session: T_Session):
     agendamento = (
-        db.query(Agendamento).filter(Agendamento.id == agendamento_id).first()
+        session.query(Agendamento).filter(Agendamento.id == agendamento_id).first()
     )
     if not agendamento:
         raise HTTPException(
@@ -83,15 +82,26 @@ def get_agendamento(agendamento_id: int, db: T_Session):
     return agendamento
 
 
-@router.delete('/{agendamento_id}', status_code=204)
-def delete_agendamento(agendamento_id: int, db: T_Session):
-    agendamento = (
-        db.query(Agendamento).filter(Agendamento.id == agendamento_id).first()
-    )
+@router.delete('/{agendamento_id}', status_code=HTTPStatus.NO_CONTENT)
+def delete_agendamento(
+    agendamento_id: int, 
+    session: T_Session,
+    current_user: T_CurrentUser
+):
+    agendamento = session.query(Agendamento).filter(Agendamento.id == agendamento_id).first()
     if not agendamento:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
-            detail='Agendamento não encontrado',
+            detail='Agendamento não encontrado'
         )
-    db.delete(agendamento)
-    db.commit()
+        
+    if (agendamento.id_usuario != current_user.id) and (current_user.perfil != 'admin'):
+        raise HTTPException(
+            status_code=HTTPStatus.FORBIDDEN,
+            detail='Apenas administradores ou o dono do horario podem exclui-lo'
+        )
+        
+    session.delete(agendamento)
+    session.commit()
+    
+    return {'message': 'Agendamento cancelado.'}

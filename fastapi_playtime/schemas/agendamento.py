@@ -1,12 +1,14 @@
-from datetime import datetime
+from datetime import date, time
 
 from pydantic import BaseModel
 
 
 class AgendamentoBase(BaseModel):
-    user_id: int
-    quadra_id: int
-    horario: datetime
+    id_quadra: int
+    id_usuario: int
+    data: date
+    inicio: time
+    fim: time
 
 
 class AgendamentoCreate(AgendamentoBase):
