@@ -40,6 +40,7 @@ def create_user(user: UserCreate, session: T_Session):
         nome=user.nome,
         cpf=user.cpf,
         email=user.email,
+        perfil=user.perfil,
         senha=get_password_hash(user.senha),  # Hash da senha
     )
 

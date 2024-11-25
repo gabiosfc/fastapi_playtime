@@ -3,15 +3,19 @@ from typing import List
 from pydantic import BaseModel, EmailStr
 from pydantic.config import ConfigDict
 
+from fastapi_playtime.models.user import PerfilUsuario
+
 
 class UserBase(BaseModel):
     nome: str
     cpf: str
     email: EmailStr
+    perfil: PerfilUsuario
 
 
 class UserCreate(UserBase):
     senha: str
+    perfil: PerfilUsuario
 
 
 class UserPublic(BaseModel):

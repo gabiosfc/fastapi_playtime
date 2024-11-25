@@ -3,13 +3,13 @@ from http import HTTPStatus
 from fastapi import FastAPI
 
 from fastapi_playtime.database import engine
-from fastapi_playtime.models.user import (
-    table_registry,  # Certifique-se de importar o registry
-)
+from fastapi_playtime.models.quadra import table_registry as tr_quadra
+from fastapi_playtime.models.user import table_registry as tr_user
 from fastapi_playtime.routers import agendamento, auth, quadra, users
 
 # Criar tabelas no banco de dados
-table_registry.metadata.create_all(bind=engine)
+tr_user.metadata.create_all(bind=engine)
+tr_quadra.metadata.create_all(bind=engine)
 
 app = FastAPI()
 

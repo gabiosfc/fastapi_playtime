@@ -7,11 +7,12 @@ class QuadraBase(BaseModel):
 
 
 class QuadraCreate(QuadraBase):
-    pass
+    disponivel: bool = True
 
 
 class QuadraOut(QuadraBase):
     id: int
+    disponivel: bool
 
     class Config:
         orm_mode = True
