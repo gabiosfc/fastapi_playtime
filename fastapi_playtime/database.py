@@ -3,9 +3,7 @@ from sqlalchemy.orm import Session
 
 from fastapi_playtime.settings import Settings
 
-engine = create_engine(
-    Settings().DATABASE_URL
-)
+engine = create_engine(Settings().DATABASE_URL)
 
 
 def get_session():  # pragma: no cover

@@ -25,7 +25,7 @@ T_OAuth2Form = Annotated[OAuth2PasswordRequestForm, Depends()]
 def login_for_access_token(form_data: T_OAuth2Form, session: T_Session):
     user = session.scalar(select(User).where(User.email == form_data.username))
 
-    if not user or not verify_password(form_data.password, user.password):
+    if not user or not verify_password(form_data.password, user.senha):
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail='Incorrect email or password',

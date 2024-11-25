@@ -1,20 +1,32 @@
-from datetime import datetime
+from typing import List
 
 from pydantic import BaseModel, EmailStr
+from pydantic.config import ConfigDict
 
 
 class UserBase(BaseModel):
-    username: str
+    nome: str
+    cpf: str
     email: EmailStr
 
 
 class UserCreate(UserBase):
-    password: str
+    senha: str
 
 
-class UserOut(UserBase):
+class UserPublic(BaseModel):
     id: int
-    created_at: datetime
+    nome: str
+    cpf: str
+    email: EmailStr
 
-    class Config:
-        orm_mode = True
+    # Configuração para permitir conversão automática de atributos do modelo
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserList(BaseModel):
+    users: List[UserPublic]
+
+
+class Message(BaseModel):
+    message: str
