@@ -1,7 +1,7 @@
-from datetime import date, time
+from datetime import date, datetime, time
 
-from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column, registry
+from sqlalchemy import ForeignKey, func
+from sqlalchemy.orm import Mapped, mapped_column
 
 from .user import table_registry
 
@@ -16,3 +16,10 @@ class Agendamento:
     data: Mapped[date] = mapped_column(nullable=False)
     inicio: Mapped[time] = mapped_column(nullable=False)
     fim: Mapped[time] = mapped_column(nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(
+        init=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        init=False, server_default=func.now(), server_onupdate=func.now()
+    )

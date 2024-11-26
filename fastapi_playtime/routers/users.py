@@ -52,7 +52,18 @@ def create_user(user: UserCreate, session: T_Session):
 
 
 @router.get('/', response_model=UserList)
-def read_users(session: T_Session, limit: int = 10, skip: int = 0):
+def read_users(
+    session: T_Session,
+    current_user: T_CurrentUser,
+    limit: int = 10,
+    skip: int = 0,
+):
+    if current_user.perfil != 'admin':
+        raise HTTPException(
+            status_code=HTTPStatus.FORBIDDEN,
+            detail='Somente administradores podem ver os usuários',
+        )
+
     users = session.scalars(select(User).limit(limit).offset(skip)).all()
     return {'users': users}
 

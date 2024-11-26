@@ -110,5 +110,5 @@ def delete_quadra(
 
     session.delete(quadra)
     session.commit()
-    
+
     return {'message': 'Quadra excluída.'}
