@@ -116,7 +116,7 @@ def delete_agendamento(
     ):
         raise HTTPException(
             status_code=HTTPStatus.FORBIDDEN,
-            detail='Apenas administradores ou donos do horario podem exclui-lo',
+            detail='Apenas administradores ou donos do horario podem excluir',
         )
 
     session.delete(agendamento)
