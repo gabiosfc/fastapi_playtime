@@ -1,5 +1,7 @@
+from datetime import datetime
 from http import HTTPStatus
 from typing import Annotated
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -28,11 +30,13 @@ def create_agendamento(
     session: T_Session,
     current_user: T_CurrentUser,
 ):
-    quadra = (
-        session.query(Quadra)
-        .filter(Quadra.id == agendamento.id_quadra)
-        .first()
-    )
+    # Configurar fuso horário
+    local_tz = ZoneInfo("America/Sao_Paulo")
+    data = agendamento.data
+    inicio_utc = datetime.combine(data, agendamento.inicio).replace(tzinfo=local_tz).astimezone(ZoneInfo("UTC")).time()
+    fim_utc = datetime.combine(data, agendamento.fim).replace(tzinfo=local_tz).astimezone(ZoneInfo("UTC")).time()
+
+    quadra = (session.query(Quadra).filter(Quadra.id == agendamento.id_quadra).first())
     if not quadra:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail='Quadra não encontrada'
@@ -48,9 +52,9 @@ def create_agendamento(
         session.query(Agendamento)
         .filter(
             Agendamento.id_quadra == agendamento.id_quadra,
-            Agendamento.data == agendamento.data,
-            Agendamento.inicio < agendamento.fim,
-            Agendamento.fim > agendamento.inicio,
+            Agendamento.data == data,
+            Agendamento.inicio < fim_utc,
+            Agendamento.fim > inicio_utc,
         )
         .first()
     )
@@ -64,9 +68,9 @@ def create_agendamento(
     novo_agendamento = Agendamento(
         id_quadra=agendamento.id_quadra,
         id_usuario=current_user.id,
-        data=agendamento.data,
-        inicio=agendamento.inicio,
-        fim=agendamento.fim,
+        data=data,
+        inicio=inicio_utc,
+        fim=fim_utc,
     )
 
     session.add(novo_agendamento)
@@ -78,8 +82,30 @@ def create_agendamento(
 
 @router.get('/', response_model=list[AgendamentoOut])
 def list_agendamentos(session: T_Session):
-    return session.query(Agendamento).all()
+    local_tz = ZoneInfo("America/Sao_Paulo")
+    
+    agendamentos = session.query(Agendamento).all()
+    
+    return_agendamentos = []
+    for agendamento in agendamentos:
+        inicio_local = datetime.combine(
+            agendamento.data, agendamento.inicio
+        ).replace(tzinfo=ZoneInfo("UTC")).astimezone(local_tz).time()
+        
+        fim_local = datetime.combine(
+            agendamento.data, agendamento.fim
+        ).replace(tzinfo=ZoneInfo("UTC")).astimezone(local_tz).time()
+        
+        return_agendamentos.append({
+            "id": agendamento.id,
+            "id_quadra": agendamento.id_quadra,
+            "id_usuario": agendamento.id_usuario,
+            "data": agendamento.data.strftime("%d/%m/%Y"),
+            "inicio": inicio_local.strftime("%H:%M:%S"),
+            "fim": fim_local.strftime("%H:%M:%S")
+        })
 
+    return return_agendamentos
 
 @router.get('/{agendamento_id}', response_model=AgendamentoOut)
 def get_agendamento(agendamento_id: int, session: T_Session):
@@ -93,7 +119,26 @@ def get_agendamento(agendamento_id: int, session: T_Session):
             status_code=HTTPStatus.NOT_FOUND,
             detail='Agendamento não encontrado',
         )
-    return agendamento
+        
+    local_tz = ZoneInfo("America/Sao_Paulo")
+    
+    inicio_local = datetime.combine(agendamento.data, agendamento.inicio).replace(tzinfo=ZoneInfo("UTC")).astimezone(local_tz).time()
+    fim_local = datetime.combine(agendamento.data, agendamento.fim).replace(tzinfo=ZoneInfo("UTC")).astimezone(local_tz).time()
+    
+    data = agendamento.data.strftime("%d/%m/%Y")
+    inicio = inicio_local.strftime("%H:%M:%S")
+    fim = fim_local.strftime("%H:%M:%S")
+    
+    return_agendamento = {
+        "id": agendamento.id,
+        "id_quadra": agendamento.id_quadra,
+        "id_usuario": agendamento.id_usuario,
+        "data": data,
+        "inicio": inicio,
+        "fim": fim
+    }
+
+    return return_agendamento
 
 
 @router.delete('/{agendamento_id}', status_code=HTTPStatus.NO_CONTENT)
