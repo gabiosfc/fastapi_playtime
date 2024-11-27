@@ -107,7 +107,17 @@ def create_agendamento(
     session.commit()
     session.refresh(novo_agendamento)
 
-    return novo_agendamento
+    # buildando o retorno diferente do que é armazenado no banco:
+    return_novo_agendamento = {
+        'id': novo_agendamento.id,
+        'id_quadra': agendamento.id_quadra,
+        'id_usuario': current_user.id,
+        'data': agendamento.data,
+        'inicio': agendamento.inicio,
+        'fim': agendamento.fim,
+    }
+
+    return return_novo_agendamento
 
 
 @router.get('/', response_model=list[AgendamentoOut])
