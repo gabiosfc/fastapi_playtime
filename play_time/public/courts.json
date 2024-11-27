@@ -1,0 +1,8 @@
+{
+  "courts": [
+    { "id": 1, "nome": "Maresias" },
+    { "id": 2, "nome": "Ubatuba" },
+    { "id": 3, "nome": "Guarujá" },
+    { "id": 4, "nome": "Itararé" }
+  ]
+}
