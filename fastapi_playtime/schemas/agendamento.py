@@ -11,24 +11,24 @@ class AgendamentoBase(BaseModel):
     fim: time
 
     # validação da data
-    @field_validator("data", mode="before")
+    @field_validator('data', mode='before')
     def validar_data(cls, value):
         if isinstance(value, date):
             return value
-        
+
         try:
-            return datetime.strptime(value, "%d/%m/%Y").date()
+            return datetime.strptime(value, '%d/%m/%Y').date()
         except ValueError:
             raise ValueError('A data deve estar no formato dd/mm/yyyy')
 
     # validação de inicio e fim
-    @field_validator("inicio", "fim", mode="before")
+    @field_validator('inicio', 'fim', mode='before')
     def validar_horas(cls, value):
         if isinstance(value, time):
             return value
-        
+
         try:
-            return datetime.strptime(value, "%H:%M:%S").time()
+            return datetime.strptime(value, '%H:%M:%S').time()
         except ValueError:
             raise ValueError('Horário deve estar no formato hh:mm:ss')
 
