@@ -1,9 +1,12 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation"; // Para redirecionar o usuário
 
 export default function SignupPage() {
+  const router = useRouter();
   const [name, setName] = React.useState("");
+  const [cpf, setCpf] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
@@ -20,12 +23,18 @@ export default function SignupPage() {
     }
 
     try {
-      const response = await fetch("/api/signup", {
+      const response = await fetch("http://127.0.0.1:8000/users/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({
+          nome: name,
+          cpf,
+          email,
+          senha: password,
+          perfil: "cliente", // Valor fixo do perfil
+        }),
       });
 
       if (!response.ok) {
@@ -38,6 +47,10 @@ export default function SignupPage() {
     }
   };
 
+  const goToLogin = () => {
+    router.push("/login"); // Redireciona para a rota de login
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center space-y-6 bg-[#FFD922]">
       <h1 className="text-5xl font-semibold mb-6">Cadastre-se</h1>
@@ -48,6 +61,13 @@ export default function SignupPage() {
           className="p-2 border rounded"
           value={name}
           onChange={(e) => setName(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="CPF"
+          className="p-2 border rounded"
+          value={cpf}
+          onChange={(e) => setCpf(e.target.value)}
         />
         <input
           type="email"
@@ -78,6 +98,14 @@ export default function SignupPage() {
         >
           Cadastre-se
         </button>
+        {message && (
+          <button
+            onClick={goToLogin}
+            className="p-2 bg-[#067c8a] text-white rounded mt-4"
+          >
+            Ir para login
+          </button>
+        )}
       </div>
     </div>
   );
