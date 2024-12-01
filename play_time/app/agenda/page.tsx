@@ -149,44 +149,18 @@ export default function CalendarDemo() {
 
   return (
     <div className="min-h-screen flex flex-col items-center">
+      {/* Barra de navegação */}
       <div className="w-full bg-[#FFD922] text-black p-4 fixed top-0 left-0 right-0 z-10">
         <div className="flex justify-between items-center">
-          <button
-            onClick={toggleMenu}
-            className="text-black focus:outline-none"
-            style={{ position: "absolute", left: 16, top: 16 }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              className="w-6 h-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
-          </button>
+          {/* Menu suspenso */}
+          <MenuSuspenso isMenuOpen={isMenuOpen} toggleMenu={toggleMenu} />
+
+          {/* Nome do aplicativo (PlayTime) */}
           <div className="flex-1 text-center">
             <h1 className="text-2xl font-semibold">PlayTime</h1>
           </div>
         </div>
       </div>
-
-      {isMenuOpen && (
-        <div className="absolute top-16 left-0 bg-[#FFD922] text-black p-4 z-20 w-max">
-          <div className="flex flex-col items-start space-y-4">
-            <a href="/home" className="text-black hover:text-gray-700">Home</a>
-            <a href="/meusAgendamentos" className="text-black hover:text-gray-700">Meus Agendamentos</a>
-            <a href="/agenda" className="text-black hover:text-gray-700">Reservar Quadra</a>
-            <button onClick={handleLogout} className="text-black hover:text-gray-700">Sair</button>
-          </div>
-        </div>
-      )}
 
       <div className="pt-24 flex items-start justify-center space-x-8">
         <Calendar
