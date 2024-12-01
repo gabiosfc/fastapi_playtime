@@ -3,17 +3,13 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Calendar } from "@/components/ui/calendar";
+import MenuSuspenso from "../menu/page";
 
-// Definição de tipos para quadras e horários
 type Court = {
   id: number;
   nome: string;
   descricao: string;
   disponivel: boolean;
-};
-
-type AvailableTime = {
-  time: string;
 };
 
 export default function CalendarDemo() {
@@ -71,24 +67,50 @@ export default function CalendarDemo() {
     ? `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
     : "";
 
+  const checkExistingBooking = async (userId: number) => {
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/agendamento/usuario/${userId}`, {
+        headers: {
+          "Authorization": "Bearer YOUR_TOKEN_HERE",
+        },
+      });
+      if (!response.ok) {
+        throw new Error("Erro ao verificar agendamentos existentes.");
+      }
+      const data = await response.json();
+      return data.length > 0; // Retorna verdadeiro se já houver agendamento
+    } catch (error) {
+      console.error("Erro ao verificar agendamento existente:", error);
+      return false;
+    }
+  };
+
   const handleConfirm = async () => {
-    if (!date || !selectedTime || !selectedCourt) return;
+    if (!date || !selectedTime || !selectedCourt) {
+      alert("Por favor, preencha todos os campos.");
+      return;
+    }
 
-    // Encontrar o ID da quadra selecionada
     const selectedCourtData = courts.find((court) => court.nome === selectedCourt);
-
     if (!selectedCourtData) {
       alert("Quadra selecionada inválida.");
       return;
     }
 
-    // Dados para a API
+    const userId = 2; // ID do usuário autenticado (substituir pelo correto)
+    const alreadyBooked = await checkExistingBooking(userId);
+
+    if (alreadyBooked) {
+      alert("Você já possui um agendamento ativo. Cancele-o antes de criar um novo.");
+      return;
+    }
+
     const agendamentoData = {
       id_quadra: selectedCourtData.id,
-      id_usuario: 2, // Substituir com o ID do usuário autenticado
-      data: date.toISOString().split("T")[0], // Formato "YYYY-MM-DD"
-      inicio: `${selectedTime}:00`, // Adiciona segundos ao horário
-      fim: `${selectedTime}:59`, // Exemplo de ajuste para o término do horário
+      id_usuario: userId,
+      data: date.toISOString().split("T")[0],
+      inicio: `${selectedTime}:00`,
+      fim: `${selectedTime}:59`,
     };
 
     try {
@@ -96,7 +118,7 @@ export default function CalendarDemo() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJnYWJyaWVsYUBhZG1pbi5jb20iLCJleHAiOjE3MzI2NjgzNzB9.KTr5kHOPEDd_hEUtEMO21f5nuDB6El0D1aqTPNjk3vQ", // Atualize com o token correto
+          "Authorization": "Bearer YOUR_TOKEN_HERE",
         },
         body: JSON.stringify(agendamentoData),
       });
@@ -121,13 +143,12 @@ export default function CalendarDemo() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("authToken"); 
-    router.push("/login"); 
+    localStorage.removeItem("authToken");
+    router.push("/login");
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center">
-      {/* Header com Menu Suspenso no canto superior esquerdo */}
       <div className="w-full bg-[#FFD922] text-black p-4 fixed top-0 left-0 right-0 z-10">
         <div className="flex justify-between items-center">
           <button
@@ -150,40 +171,23 @@ export default function CalendarDemo() {
               />
             </svg>
           </button>
-          {/* Nome do aplicativo (PlayTime) */}
           <div className="flex-1 text-center">
             <h1 className="text-2xl font-semibold">PlayTime</h1>
           </div>
         </div>
       </div>
 
-      {/* Menu Suspenso */}
       {isMenuOpen && (
-        <div
-          className="absolute top-16 left-0 bg-[#FFD922] text-black p-4 z-20 w-max"
-          style={{ zIndex: 20 }}
-        >
+        <div className="absolute top-16 left-0 bg-[#FFD922] text-black p-4 z-20 w-max">
           <div className="flex flex-col items-start space-y-4">
-            <a href="/home" className="text-black hover:text-gray-700">
-              Home
-            </a>
-            <a href="/meusAgendamentos" className="text-black hover:text-gray-700">
-              Meus Agendamentos
-            </a>
-            <a href="/agenda" className="text-black hover:text-gray-700">
-              Reservar Quadra
-            </a>
-            <button
-              onClick={handleLogout}
-              className="text-black hover:text-gray-700"
-            >
-              Sair
-            </button>
+            <a href="/home" className="text-black hover:text-gray-700">Home</a>
+            <a href="/meusAgendamentos" className="text-black hover:text-gray-700">Meus Agendamentos</a>
+            <a href="/agenda" className="text-black hover:text-gray-700">Reservar Quadra</a>
+            <button onClick={handleLogout} className="text-black hover:text-gray-700">Sair</button>
           </div>
         </div>
       )}
 
-      {/* Conteúdo principal */}
       <div className="pt-24 flex items-start justify-center space-x-8">
         <Calendar
           mode="single"
@@ -200,8 +204,9 @@ export default function CalendarDemo() {
               <button
                 key={time}
                 onClick={() => handleTimeSelect(time)}
-                className={`px-4 py-2 rounded ${selectedTime === time ? "text-white" : "text-gray-700"
-                  }`}
+                className={`px-4 py-2 rounded ${
+                  selectedTime === time ? "text-white" : "text-gray-700"
+                }`}
                 style={{
                   backgroundColor: selectedTime === time ? "#067c8a" : "#e0e0e0",
                   color: selectedTime === time ? "white" : "black",
@@ -240,20 +245,7 @@ export default function CalendarDemo() {
 
           <button
             onClick={handleConfirm}
-            className="mt-4 px-6 py-2"
-            style={{
-              backgroundColor: "#067c8a",
-              color: "white",
-              borderRadius: "0.375rem",
-              border: "none",
-              cursor: "pointer",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#045f67";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "#067c8a";
-            }}
+            className="mt-4 px-6 py-2 bg-[#067c8a] text-white rounded"
           >
             Confirmar
           </button>

@@ -1,16 +1,25 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation"; // Para redirecionar o usuário
 
 export default function ForgotPasswordPage() {
+  const router = useRouter();
   const [email, setEmail] = React.useState("");
+  const [error, setError] = React.useState("");
   const [message, setMessage] = React.useState("");
 
   const handleResetPassword = async () => {
+    setError("");
     setMessage("");
 
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      setError("Por favor, insira um email válido.");
+      return;
+    }
+
     try {
-      const response = await fetch("/api/forgotPassword", {
+      const response = await fetch("http://127.0.0.1:8000/forgotPassword", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -23,8 +32,9 @@ export default function ForgotPasswordPage() {
       }
 
       setMessage("Email de recuperação de senha enviado com sucesso. Verifique sua caixa de entrada.");
+      setTimeout(() => router.push("/login"), 3000); // Redireciona para login após 3 segundos
     } catch (error) {
-      setMessage("Erro ao enviar o email. Tente novamente.");
+      setError("Erro ao enviar o email. Tente novamente.");
     }
   };
 
@@ -39,6 +49,7 @@ export default function ForgotPasswordPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
+        {error && <p className="text-red-500">{error}</p>}
         {message && <p className="text-green-500">{message}</p>}
         <button
           onClick={handleResetPassword}
