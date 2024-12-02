@@ -38,8 +38,12 @@ export default function CalendarDemo() {
 
     const fetchCourts = async () => {
       try {
+        const token = localStorage.getItem("access_token"); // Obtém o token do localStorage
         const response = await fetch("http://127.0.0.1:8000/quadras/", {
-          headers: { Accept: "application/json" },
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         });
         if (!response.ok) {
           throw new Error(`Erro ${response.status}: Não foi possível carregar as quadras.`);
@@ -64,26 +68,8 @@ export default function CalendarDemo() {
   };
 
   const formattedDate = date
-    ? `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
+    ? `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()}`
     : "";
-
-  const checkExistingBooking = async (userId: number) => {
-    try {
-      const response = await fetch(`http://127.0.0.1:8000/agendamento/usuario/${userId}`, {
-        headers: {
-          "Authorization": "Bearer YOUR_TOKEN_HERE",
-        },
-      });
-      if (!response.ok) {
-        throw new Error("Erro ao verificar agendamentos existentes.");
-      }
-      const data = await response.json();
-      return data.length > 0; // Retorna verdadeiro se já houver agendamento
-    } catch (error) {
-      console.error("Erro ao verificar agendamento existente:", error);
-      return false;
-    }
-  };
 
   const handleConfirm = async () => {
     if (!date || !selectedTime || !selectedCourt) {
@@ -97,28 +83,28 @@ export default function CalendarDemo() {
       return;
     }
 
-    const userId = 2; // ID do usuário autenticado (substituir pelo correto)
-    const alreadyBooked = await checkExistingBooking(userId);
+    const userId = 0; // ID do usuário é preenchido conforme token ao realizar o POST
 
-    if (alreadyBooked) {
-      alert("Você já possui um agendamento ativo. Cancele-o antes de criar um novo.");
-      return;
-    }
+    // Extrair horários de início e fim no formato HH:mm:00
+    const [start, end] = selectedTime.split(" às ");
+    const inicio = `${start}:00`;
+    const fim = `${end}:00`;
 
     const agendamentoData = {
       id_quadra: selectedCourtData.id,
       id_usuario: userId,
-      data: date.toISOString().split("T")[0],
-      inicio: `${selectedTime}:00`,
-      fim: `${selectedTime}:59`,
+      data: formattedDate,
+      inicio,
+      fim,
     };
 
     try {
+      const token = localStorage.getItem("access_token"); // Obtém o token do localStorage
       const response = await fetch("http://127.0.0.1:8000/agendamento/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer YOUR_TOKEN_HERE",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(agendamentoData),
       });

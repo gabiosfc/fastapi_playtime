@@ -30,12 +30,15 @@ export default function MeusAgendamentos() {
     setIsMenuOpen(!isMenuOpen);
   };
 
+  const getToken = () => localStorage.getItem("access_token");
+
   const fetchQuadras = async () => {
     try {
+      const token = getToken();
       const response = await fetch("http://127.0.0.1:8000/quadras/", {
         headers: {
           Accept: "application/json",
-          Authorization: "Bearer <SEU_TOKEN>", // Substituir pelo token real
+          Authorization: `Bearer ${token}`,
         },
       });
       if (!response.ok) throw new Error(`Erro ${response.status}`);
@@ -48,27 +51,27 @@ export default function MeusAgendamentos() {
 
   const fetchAgendamentos = async () => {
     try {
+      const token = getToken();
       const response = await fetch("http://127.0.0.1:8000/agendamento/", {
         headers: {
           Accept: "application/json",
-          Authorization: "Bearer <SEU_TOKEN>", // Substituir pelo token real
+          Authorization: `Bearer ${token}`,
         },
       });
       if (!response.ok) throw new Error(`Erro ${response.status}`);
       const data: Agendamento[] = await response.json();
-      // Associa o nome da quadra aos agendamentos após a carga das quadras
       const agendamentosComQuadra = data.map((agendamento) => {
         const quadra = quadras.find((q) => q.id === agendamento.id_quadra);
         return {
           ...agendamento,
-          quadra: quadra ? { nome: quadra.nome } : { nome: "Não especificado" }, // Ajuste aqui
+          quadra: quadra ? { nome: quadra.nome } : { nome: "Não especificado" },
         };
       });
       setAgendamentos(
         agendamentosComQuadra.sort((a, b) => {
           const dateA = new Date(a.data + "T" + a.inicio);
           const dateB = new Date(b.data + "T" + b.inicio);
-          return dateB.getTime() - dateA.getTime(); // Ordena do mais recente para o mais antigo
+          return dateB.getTime() - dateA.getTime();
         })
       );
     } catch (error) {
@@ -78,11 +81,12 @@ export default function MeusAgendamentos() {
 
   const handleCancel = async (id: number) => {
     try {
+      const token = getToken();
       const response = await fetch(`http://127.0.0.1:8000/agendamento/${id}/`, {
         method: "DELETE",
         headers: {
           Accept: "application/json",
-          Authorization: "Bearer <SEU_TOKEN>", // Substituir pelo token real
+          Authorization: `Bearer ${token}`,
         },
       });
       if (response.ok) {
@@ -105,20 +109,18 @@ export default function MeusAgendamentos() {
     return differenceInHours >= 12;
   };
 
-  // Função que formata a data sem modificar o valor
   const formatDate = (data: string) => {
     const [year, month, day] = data.split("-");
     return `${day}/${month}/${year}`;
   };
 
   React.useEffect(() => {
-    fetchQuadras(); // Carrega as quadras
+    fetchQuadras();
   }, []);
 
-  // Dependendo do estado de quadras, carregue os agendamentos
   React.useEffect(() => {
     if (quadras.length > 0) {
-      fetchAgendamentos(); // Só carrega agendamentos após as quadras
+      fetchAgendamentos();
     }
   }, [quadras]);
 
@@ -137,7 +139,6 @@ export default function MeusAgendamentos() {
         </div>
       </div>
 
-      {/* Conteúdo principal */}
       <div className="flex flex-col items-center justify-center flex-1 pt-24 px-6">
         <h2 className="text-2xl font-semibold mb-6">Meus Agendamentos</h2>
 
@@ -151,7 +152,7 @@ export default function MeusAgendamentos() {
                   <strong>Quadra:</strong> {agendamento.quadra?.nome || "Não especificado"}
                 </p>
                 <p>
-                  <strong>Data:</strong> {formatDate(agendamento.data)} {/* Formata a data */}
+                  <strong>Data:</strong> {formatDate(agendamento.data)}
                 </p>
                 <p>
                   <strong>Horário:</strong> {agendamento.inicio} às {agendamento.fim}
