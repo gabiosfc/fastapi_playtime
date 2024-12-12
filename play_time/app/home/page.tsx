@@ -3,6 +3,9 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import MenuSuspenso from "../menu/page";
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 
 export default function HomePage() {
   const router = useRouter();
@@ -13,12 +16,23 @@ export default function HomePage() {
   };
 
   const handleReserveClick = () => {
-    router.push("/agenda"); 
+    router.push("/agenda");
   };
 
   const handleLogout = () => {
     localStorage.removeItem("authToken");
-    router.push("/login"); 
+    router.push("/login");
+  };
+
+  // Configurações do carrossel
+  const settings = {
+    dots: true,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 3000,
   };
 
   return (
@@ -37,7 +51,23 @@ export default function HomePage() {
       </div>
 
       {/* Conteúdo principal */}
-      <div className="flex flex-col items-center justify-center flex-1 pt-24">
+      <div className="flex flex-col items-center justify-center flex-1 pt-24 space-y-8">
+        {/* Carrossel de imagens */}
+        <Slider {...settings} className="w-full max-w-screen-md">
+          <div className="relative">
+            <img src="/images/image1.jpg" alt="Imagem 1" className="w-full h-64 object-cover" />
+            <p className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-center py-2">Descrição da Imagem 1</p>
+          </div>
+          <div className="relative">
+            <img src="/images/image2.jpeg" alt="Imagem 2" className="w-full h-64 object-cover" />
+            <p className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-center py-2">Descrição da Imagem 2</p>
+          </div>
+          <div className="relative">
+            <img src="/images/image3.jpg" alt="Imagem 3" className="w-full h-64 object-cover" />
+            <p className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-center py-2">Descrição da Imagem 3</p>
+          </div>
+        </Slider>
+
         {/* Botão para reservar quadra */}
         <button
           onClick={handleReserveClick}
@@ -57,6 +87,11 @@ export default function HomePage() {
           Reservar quadra
         </button>
       </div>
+
+      {/* Rodapé */}
+      <footer className="w-full bg-gray-800 text-white text-center py-4 mt-8">
+        <p>Siga-nos no Instagram: <a href="https://instagram.com/playtime" className="text-blue-400">@playtime</a></p>
+      </footer>
     </div>
   );
 }
