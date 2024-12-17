@@ -26,9 +26,9 @@ export default function MeusAgendamentos() {
   const [agendamentos, setAgendamentos] = React.useState<Agendamento[]>([]);
   const [quadras, setQuadras] = React.useState<Quadra[]>([]);
   const [tabSelecionada, setTabSelecionada] = React.useState<'proximos' | 'historico'>('proximos');
-  const [agendamentosProximos, setAgendamentosProximos] = React.useState<Agendamento[]>([]);
-  const [agendamentosHistorico, setAgendamentosHistorico] = React.useState<Agendamento[]>([]);
-  const [mensagem, setMensagem] = React.useState<string | null>(null);  // Estado para mensagem de erro ou sucesso
+  const [agendamentosProximos, setAgendamentosProximos] = React.useState<Agendamento[]>([]);  
+  const [agendamentosHistorico, setAgendamentosHistorico] = React.useState<Agendamento[]>([]);  
+  const [mensagem, setMensagem] = React.useState<string | null>(null);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -57,10 +57,10 @@ export default function MeusAgendamentos() {
   const fetchAgendamentos = async () => {
     try {
       const token = getToken();
-      const response = await fetch("http://127.0.0.1:8000/current_user/agendamentos/", {  // Mudança na URL para 'current_user/agendamentos'
+      const response = await fetch("http://127.0.0.1:8000/current_user/agendamentos/", {
         headers: {
           Accept: "application/json",
-          Authorization: `Bearer ${token}`,  // Passando o token JWT no cabeçalho
+          Authorization: `Bearer ${token}`,
         },
       });
       if (!response.ok) throw new Error(`Erro ${response.status}`);
@@ -100,7 +100,7 @@ export default function MeusAgendamentos() {
   const handleCancel = async (id: number) => {
     try {
       const token = getToken();
-      const response = await fetch(`http://127.0.0.1:8000/current_user/agendamentos/${id}/`, {  // Mudança na URL para 'current_user/agendamentos/{id}'
+      const response = await fetch(`http://127.0.0.1:8000/current_user/agendamentos/${id}/`, {
         method: "DELETE",
         headers: {
           Accept: "application/json",
@@ -147,7 +147,7 @@ export default function MeusAgendamentos() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <div className="w-full bg-[#FFD922] text-black p-4 fixed top-0 left-0 right-0 z-10">
+      <div className="w-full bg-[#FFD922] text-black p-4">
         <div className="flex justify-between items-center">
           <MenuSuspenso isMenuOpen={isMenuOpen} toggleMenu={toggleMenu} />
           <div className="flex-1 text-center">
@@ -156,7 +156,7 @@ export default function MeusAgendamentos() {
         </div>
       </div>
 
-      <div className="pt-24 pb-6 px-6"> {/* Espaço adicional para distanciar do header */}
+      <div className="pt-16 pb-6 px-6"> {/* Ajuste de padding para compensar o header */}
         {/* Mensagem de sucesso ou erro */}
         {mensagem && (
           <div className="mb-4 p-4 text-center rounded-lg text-white bg-red-500 relative w-full max-w-xl mx-auto">
@@ -170,8 +170,8 @@ export default function MeusAgendamentos() {
           </div>
         )}
 
-        <div className="sticky top-16 bg-white p-4 shadow-md z-20"> {/* Fixando o conteúdo abaixo do header */}
-          <div className="flex flex-col items-center justify-center text-center"> {/* Centralizando o conteúdo */}
+        <div className="bg-white p-4 shadow-md mb-6"> {/* Título e Tabs agora não são fixos */}
+          <div className="flex flex-col items-center justify-center text-center">
             <h2 className="text-2xl font-semibold mb-6">Meus Agendamentos</h2>
 
             <div className="flex justify-center space-x-6 mb-6">

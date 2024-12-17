@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 interface MenuSuspensoProps {
@@ -8,6 +8,8 @@ interface MenuSuspensoProps {
 
 const MenuSuspenso: React.FC<MenuSuspensoProps> = ({ isMenuOpen, toggleMenu }) => {
   const router = useRouter();
+  const menuRef = useRef<HTMLDivElement | null>(null); // Referência para o menu
+  const buttonRef = useRef<HTMLButtonElement | null>(null); // Referência para o botão do menu
 
   const handleLogout = () => {
     // Remove o token de autenticação ou qualquer dado de sessão
@@ -17,10 +19,37 @@ const MenuSuspenso: React.FC<MenuSuspensoProps> = ({ isMenuOpen, toggleMenu }) =
     router.push("/login");
   };
 
+  // Função para fechar o menu se o clique for fora do menu ou do botão
+  const handleClickOutside = (event: MouseEvent) => {
+    if (
+      menuRef.current && !menuRef.current.contains(event.target as Node) &&
+      buttonRef.current && !buttonRef.current.contains(event.target as Node)
+    ) {
+      toggleMenu();
+    }
+  };
+
+  // Adiciona e limpa o listener de clique fora do menu
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.addEventListener("click", handleClickOutside);
+    } else {
+      document.removeEventListener("click", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, [isMenuOpen]);
+
   return (
     <>
       {/* Ícone de Menu (Hamburger) */}
-      <button onClick={toggleMenu} className="text-black focus:outline-none">
+      <button
+        ref={buttonRef}
+        onClick={toggleMenu}
+        className="text-black focus:outline-none"
+      >
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
@@ -40,6 +69,7 @@ const MenuSuspenso: React.FC<MenuSuspensoProps> = ({ isMenuOpen, toggleMenu }) =
       {/* Menu suspenso */}
       {isMenuOpen && (
         <div
+          ref={menuRef}
           className="absolute top-16 left-0 bg-[#FFD922] text-black p-4"
           style={{ zIndex: 20, width: "max-content" }}
         >
