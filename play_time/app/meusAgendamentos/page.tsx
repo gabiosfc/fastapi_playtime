@@ -25,9 +25,14 @@ export default function MeusAgendamentos() {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [agendamentos, setAgendamentos] = React.useState<Agendamento[]>([]);
   const [quadras, setQuadras] = React.useState<Quadra[]>([]);
+  const [tabSelecionada, setTabSelecionada] = React.useState<'proximos' | 'historico'>('proximos');
+  const [agendamentosProximos, setAgendamentosProximos] = React.useState<Agendamento[]>([]);
+  const [agendamentosHistorico, setAgendamentosHistorico] = React.useState<Agendamento[]>([]);
+  const [mensagem, setMensagem] = React.useState<string | null>(null);  // Estado para mensagem de erro ou sucesso
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+    setMensagem(null);  // Limpa a mensagem ao interagir com o menu
   };
 
   const getToken = () => localStorage.getItem("access_token");
@@ -45,7 +50,7 @@ export default function MeusAgendamentos() {
       const data: Quadra[] = await response.json();
       setQuadras(data);
     } catch (error) {
-      console.error("Erro ao carregar quadras:", error);
+      setMensagem("Erro ao carregar quadras.");
     }
   };
 
@@ -67,15 +72,28 @@ export default function MeusAgendamentos() {
           quadra: quadra ? { nome: quadra.nome } : { nome: "Não especificado" },
         };
       });
-      setAgendamentos(
-        agendamentosComQuadra.sort((a, b) => {
-          const dateA = new Date(a.data + "T" + a.inicio);
-          const dateB = new Date(b.data + "T" + b.inicio);
-          return dateB.getTime() - dateA.getTime();
-        })
-      );
+
+      const agendamentosOrdenados = agendamentosComQuadra.sort((a, b) => {
+        const dateA = new Date(a.data + "T" + a.inicio);
+        const dateB = new Date(b.data + "T" + b.inicio);
+        return dateA.getTime() - dateB.getTime();
+      });
+
+      const now = new Date();
+      const proximos = agendamentosOrdenados.filter((agendamento) => {
+        const agendamentoDate = new Date(`${agendamento.data}T${agendamento.inicio}`);
+        return agendamentoDate > now;
+      });
+
+      const historico = agendamentosOrdenados.filter((agendamento) => {
+        const agendamentoDate = new Date(`${agendamento.data}T${agendamento.inicio}`);
+        return agendamentoDate <= now;
+      });
+
+      setAgendamentosProximos(proximos);
+      setAgendamentosHistorico(historico);
     } catch (error) {
-      console.error("Erro ao carregar agendamentos:", error);
+      setMensagem("Erro ao carregar agendamentos.");
     }
   };
 
@@ -90,15 +108,14 @@ export default function MeusAgendamentos() {
         },
       });
       if (response.ok) {
-        alert("Agendamento cancelado com sucesso!");
-        setAgendamentos(agendamentos.filter((agendamento) => agendamento.id !== id));
+        setMensagem("Agendamento cancelado com sucesso!");
+        setAgendamentosProximos(agendamentosProximos.filter((agendamento) => agendamento.id !== id));
       } else {
         const errorData = await response.json();
-        console.error("Erro ao cancelar agendamento:", errorData);
-        alert("Erro ao cancelar o agendamento.");
+        setMensagem("Erro ao cancelar o agendamento.");
       }
     } catch (error) {
-      console.error("Erro ao cancelar agendamento:", error);
+      setMensagem("Erro ao cancelar agendamento.");
     }
   };
 
@@ -124,56 +141,115 @@ export default function MeusAgendamentos() {
     }
   }, [quadras]);
 
+  const closeMessage = () => {
+    setMensagem(null);  // Fecha a mensagem
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Barra de navegação */}
       <div className="w-full bg-[#FFD922] text-black p-4 fixed top-0 left-0 right-0 z-10">
         <div className="flex justify-between items-center">
-          {/* Menu suspenso */}
           <MenuSuspenso isMenuOpen={isMenuOpen} toggleMenu={toggleMenu} />
-
-          {/* Nome do aplicativo (PlayTime) */}
           <div className="flex-1 text-center">
             <h1 className="text-2xl font-semibold">PlayTime</h1>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-col items-center justify-center flex-1 pt-24 px-6">
-        <h2 className="text-2xl font-semibold mb-6">Meus Agendamentos</h2>
-
-        {agendamentos.length === 0 ? (
-          <p className="text-gray-500">Você não tem nenhum agendamento.</p>
-        ) : (
-          <ul className="space-y-4 w-full">
-            {agendamentos.map((agendamento) => (
-              <li key={agendamento.id} className="border p-4 rounded-lg bg-white shadow-md">
-                <p>
-                  <strong>Quadra:</strong> {agendamento.quadra?.nome || "Não especificado"}
-                </p>
-                <p>
-                  <strong>Data:</strong> {formatDate(agendamento.data)}
-                </p>
-                <p>
-                  <strong>Horário:</strong> {agendamento.inicio} às {agendamento.fim}
-                </p>
-
-                {isCancelable(agendamento.data, agendamento.inicio) ? (
-                  <button
-                    onClick={() => handleCancel(agendamento.id)}
-                    className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                  >
-                    Cancelar
-                  </button>
-                ) : (
-                  <p className="text-red-500 mt-2">
-                    Cancelamento disponível apenas com antecedência mínima de 12 horas.
-                  </p>
-                )}
-              </li>
-            ))}
-          </ul>
+      <div className="pt-24 pb-6 px-6"> {/* Espaço adicional para distanciar do header */}
+        {/* Mensagem de sucesso ou erro */}
+        {mensagem && (
+          <div className="mb-4 p-4 text-center rounded-lg text-white bg-red-500 relative w-full max-w-xl mx-auto">
+            <button
+              onClick={closeMessage}
+              className="absolute top-2 right-3 text-white"
+            >
+              X
+            </button>
+            {mensagem}
+          </div>
         )}
+
+        <div className="sticky top-16 bg-white p-4 shadow-md z-20"> {/* Fixando o conteúdo abaixo do header */}
+          <div className="flex flex-col items-center justify-center text-center"> {/* Centralizando o conteúdo */}
+            <h2 className="text-2xl font-semibold mb-6">Meus Agendamentos</h2>
+
+            <div className="flex justify-center space-x-6 mb-6">
+              <button
+                onClick={() => {
+                  setTabSelecionada('proximos');
+                  setMensagem(null); // Limpa a mensagem ao mudar de tab
+                }}
+                className={`px-6 py-2 rounded-lg ${tabSelecionada === 'proximos' ? 'bg-yellow-400' : 'bg-gray-300'}`}
+              >
+                Próximos
+              </button>
+              <button
+                onClick={() => {
+                  setTabSelecionada('historico');
+                  setMensagem(null); // Limpa a mensagem ao mudar de tab
+                }}
+                className={`px-6 py-2 rounded-lg ${tabSelecionada === 'historico' ? 'bg-yellow-400' : 'bg-gray-300'}`}
+              >
+                Histórico
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="w-full">
+          <div className={`tab-content ${tabSelecionada === 'proximos' ? '' : 'hidden'} transition-opacity duration-300 ease-in-out`}>
+            {agendamentosProximos.length === 0 ? (
+              <p className="text-gray-500">Você não tem agendamentos próximos.</p>
+            ) : (
+              <ul className="space-y-4">
+                {agendamentosProximos.map((agendamento) => (
+                  <li key={agendamento.id} className="border p-4 rounded-lg bg-white shadow-md">
+                    <p>
+                      <strong>Quadra:</strong> {agendamento.quadra?.nome || "Não especificado"}
+                    </p>
+                    <p>
+                      <strong>Data:</strong> {formatDate(agendamento.data)}
+                    </p>
+                    <p>
+                      <strong>Horário:</strong> {agendamento.inicio} às {agendamento.fim}
+                    </p>
+                    {isCancelable(agendamento.data, agendamento.inicio) && (
+                      <button
+                        onClick={() => handleCancel(agendamento.id)}
+                        className="bg-red-500 text-white rounded-lg px-4 py-2 mt-4"
+                      >
+                        Cancelar
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className={`tab-content ${tabSelecionada === 'historico' ? '' : 'hidden'} transition-opacity duration-300 ease-in-out`}>
+            {agendamentosHistorico.length === 0 ? (
+              <p className="text-gray-500">Você não tem agendamentos no histórico.</p>
+            ) : (
+              <ul className="space-y-4">
+                {agendamentosHistorico.map((agendamento) => (
+                  <li key={agendamento.id} className="border p-4 rounded-lg bg-white shadow-md">
+                    <p>
+                      <strong>Quadra:</strong> {agendamento.quadra?.nome || "Não especificado"}
+                    </p>
+                    <p>
+                      <strong>Data:</strong> {formatDate(agendamento.data)}
+                    </p>
+                    <p>
+                      <strong>Horário:</strong> {agendamento.inicio} às {agendamento.fim}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

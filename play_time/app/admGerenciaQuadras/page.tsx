@@ -98,29 +98,6 @@ export default function AdminQuadras() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    try {
-      const token = getToken();
-      const response = await fetch(`http://127.0.0.1:8000/quadras/${id}/`, {
-        method: "DELETE",
-        headers: {
-          Accept: "*/*",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (response.ok) {
-        alert("Quadra deletada com sucesso!");
-        setQuadras(quadras.filter((quadra) => quadra.id !== id));
-      } else {
-        const errorData = await response.json();
-        console.error("Erro ao deletar quadra:", errorData);
-        alert("Erro ao deletar quadra.");
-      }
-    } catch (error) {
-      console.error("Erro ao deletar quadra:", error);
-    }
-  };
-
   React.useEffect(() => {
     fetchQuadras();
   }, []);
@@ -213,35 +190,28 @@ export default function AdminQuadras() {
 
         <ul className="space-y-4 w-full">
           {quadras.map((quadra) => (
-                        <li key={quadra.id} className="border p-4 rounded-lg bg-white shadow-md">
-                        <p>
-                          <strong>Nome:</strong> {quadra.nome}
-                        </p>
-                        <p>
-                          <strong>Descrição:</strong> {quadra.descricao}
-                        </p>
-                        <p>
-                          <strong>Disponível:</strong> {quadra.disponivel ? "Sim" : "Não"}
-                        </p>
-                        <div className="flex space-x-2 mt-4">
-                          <button
-                            onClick={() => setEditandoQuadra(quadra)}
-                            className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-                          >
-                            Editar
-                          </button>
-                          <button
-                            onClick={() => handleDelete(quadra.id)}
-                            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                          >
-                            Deletar
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+            <li key={quadra.id} className="border p-4 rounded-lg bg-white shadow-md">
+              <p>
+                <strong>Nome:</strong> {quadra.nome}
+              </p>
+              <p>
+                <strong>Descrição:</strong> {quadra.descricao}
+              </p>
+              <p>
+                <strong>Disponível:</strong> {quadra.disponivel ? "Sim" : "Não"}
+              </p>
+              <div className="flex space-x-2 mt-4">
+                <button
+                  onClick={() => setEditandoQuadra(quadra)}
+                  className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                >
+                  Editar
+                </button>
               </div>
-            );
-          }
-          
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
