@@ -57,10 +57,10 @@ export default function MeusAgendamentos() {
   const fetchAgendamentos = async () => {
     try {
       const token = getToken();
-      const response = await fetch("http://127.0.0.1:8000/agendamento/", {
+      const response = await fetch("http://127.0.0.1:8000/current_user/agendamentos/", {  // Mudança na URL para 'current_user/agendamentos'
         headers: {
           Accept: "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,  // Passando o token JWT no cabeçalho
         },
       });
       if (!response.ok) throw new Error(`Erro ${response.status}`);
@@ -100,7 +100,7 @@ export default function MeusAgendamentos() {
   const handleCancel = async (id: number) => {
     try {
       const token = getToken();
-      const response = await fetch(`http://127.0.0.1:8000/agendamento/${id}/`, {
+      const response = await fetch(`http://127.0.0.1:8000/current_user/agendamentos/${id}/`, {  // Mudança na URL para 'current_user/agendamentos/{id}'
         method: "DELETE",
         headers: {
           Accept: "application/json",
