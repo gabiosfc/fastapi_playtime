@@ -120,13 +120,23 @@ def create_agendamento(
     return return_novo_agendamento
 
 
-@router.get('/', response_model=list[AgendamentoOut])
-def list_agendamentos(session: T_Session):
+@router.get('/', response_model=list[list[AgendamentoOut]])
+def list_agendamentos(session: T_Session, current_user: T_CurrentUser):
     local_tz = ZoneInfo('America/Sao_Paulo')
 
-    agendamentos = session.query(Agendamento).all()
+    if current_user.perfil != 'admin':
+        raise HTTPException(
+            HTTPStatus.UNAUTHORIZED,
+            detail='Somente administradores podem ver todos agendamentos',
+        )
+
+    agendamentos = session.query(Agendamento).order_by(
+        Agendamento.data, Agendamento.inicio
+    )
 
     return_agendamentos = []
+    agendamentos_futuros = []
+    agendamentos_passados = []
     for agendamento in agendamentos:
         inicio_local = (
             datetime.combine(agendamento.data, agendamento.inicio)
@@ -142,15 +152,27 @@ def list_agendamentos(session: T_Session):
             .time()
         )
 
-        return_agendamentos.append({
-            'id': agendamento.id,
-            'id_quadra': agendamento.id_quadra,
-            'id_usuario': agendamento.id_usuario,
-            'data': agendamento.data.strftime('%d/%m/%Y'),
-            'inicio': inicio_local.strftime('%H:%M:%S'),
-            'fim': fim_local.strftime('%H:%M:%S'),
-        })
+        if agendamento.data > (datetime.now()).date():
+            agendamentos_futuros.append({
+                'id': agendamento.id,
+                'id_quadra': agendamento.id_quadra,
+                'id_usuario': agendamento.id_usuario,
+                'data': agendamento.data.strftime('%d/%m/%Y'),
+                'inicio': inicio_local.strftime('%H:%M:%S'),
+                'fim': fim_local.strftime('%H:%M:%S'),
+            })
+        else:
+            agendamentos_passados.append({
+                'id': agendamento.id,
+                'id_quadra': agendamento.id_quadra,
+                'id_usuario': agendamento.id_usuario,
+                'data': agendamento.data.strftime('%d/%m/%Y'),
+                'inicio': inicio_local.strftime('%H:%M:%S'),
+                'fim': fim_local.strftime('%H:%M:%S'),
+            })
 
+    return_agendamentos.append(agendamentos_passados)
+    return_agendamentos.append(agendamentos_futuros)
     return return_agendamentos
 
 

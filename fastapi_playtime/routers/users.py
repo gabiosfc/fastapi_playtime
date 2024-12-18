@@ -11,7 +11,7 @@ from fastapi_playtime.schemas.comum import Message
 from fastapi_playtime.schemas.user import UserCreate, UserList, UserPublic
 from fastapi_playtime.security import get_current_user, get_password_hash
 
-router = APIRouter(prefix='/users', tags=['Users'])
+router = APIRouter(prefix='/users', tags=['Usuários'])
 T_Session = Annotated[Session, Depends(get_session)]
 T_CurrentUser = Annotated[User, Depends(get_current_user)]
 
