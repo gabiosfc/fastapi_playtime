@@ -9,7 +9,6 @@ def utc_to_gmt(data: date, inicio: time, fim: time):
         datetime.combine(data, inicio)
         .replace(tzinfo=ZoneInfo('UTC'))
         .astimezone(local_tz)
-        .time()
     )
 
     fim_local = (
@@ -19,7 +18,9 @@ def utc_to_gmt(data: date, inicio: time, fim: time):
         .time()
     )
 
-    return inicio_local, fim_local
+    data = inicio_local.date()
+
+    return data, inicio_local.time(), fim_local
 
 
 def gmt_to_utc(data: date, inicio: time, fim: time):

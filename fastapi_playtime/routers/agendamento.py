@@ -128,12 +128,12 @@ def list_agendamentos(session: T_Session, current_user: T_CurrentUser):
     agendamentos_futuros = []
     agendamentos_passados = []
     for agendamento in agendamentos:
-        inicio_local, fim_local = utc_to_gmt(
+        data_local, inicio_local, fim_local = utc_to_gmt(
             agendamento.data, agendamento.inicio, agendamento.fim
         )
 
         data, inicio, fim = format_data(
-            agendamento.data, inicio_local, fim_local
+            data_local, inicio_local, fim_local
         )
 
         if agendamento.data > (datetime.now()).date():
