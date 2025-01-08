@@ -1,31 +1,53 @@
-from datetime import date, time, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
-def gmt_to_utc(data: date, inicio: time, fim: time):
+
+def utc_to_gmt(data: date, inicio: time, fim: time):
     local_tz = ZoneInfo('America/Sao_Paulo')
 
-    inicio_utc = (
+    inicio_local = (
         datetime.combine(data, inicio)
-        .replace(tzinfo=local_tz)
-        .astimezone(ZoneInfo('UTC'))
+        .replace(tzinfo=ZoneInfo('UTC'))
+        .astimezone(local_tz)
     )
 
-    fim_utc = (
+    fim_local = (
         datetime.combine(data, fim)
-        .replace(tzinfo=local_tz)
-        .astimezone(ZoneInfo('UTC'))
+        .replace(tzinfo=ZoneInfo('UTC'))
+        .astimezone(local_tz)
         .time()
     )
 
-    data = inicio_utc.date()
+    data = inicio_local.date()
 
-    return data, inicio_utc.time(), fim_utc
+    return data, inicio_local.time(), fim_local
 
-data = datetime.strptime('06/01/2025', '%d/%m/%Y').date()
-inicio = datetime.strptime('21:00:00', '%H:%M:%S').time()
-fim = datetime.strptime('22:00:00', '%H:%M:%S').time()
 
-data_utc, inicio_utc, fim_utc = gmt_to_utc(data, inicio, fim)
+utc = datetime.now() + timedelta(hours=5)
+data_utc = utc.date()
+inicio_utc = utc.time()
+fim_utc = (utc + timedelta(hours=1)).time()
 
-print(data, inicio, fim)
+now = datetime.now()
+data = now.date()
+inicio = now.time()
+fim = (now + timedelta(hours=1)).time()
+
+data_gmt, inicio_gmt, fim_gmt = utc_to_gmt(data_utc, inicio_utc, fim_utc)
+
 print(data_utc, inicio_utc, fim_utc)
+print(data_gmt, inicio_gmt, fim_gmt)
+print(data, inicio, fim)
+
+if data_gmt == data:
+    if inicio_gmt > inicio:
+        print('true1')
+
+if data_gmt > data:
+    print('true2')
+    if inicio_gmt > inicio:
+        print('true3')
+
+# print(data, inicio, fim)
+# print('data gmt ->', data_gmt, '-', inicio_gmt, '-', fim_gmt)
+# print('data utc ->', data_utc, '-', inicio_utc, '-', fim_utc)

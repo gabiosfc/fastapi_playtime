@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from http import HTTPStatus
 from typing import Annotated
 
@@ -49,7 +49,7 @@ def create_agendamento(
             status_code=HTTPStatus.FORBIDDEN,
             detail='Quadra não está disponível para agendamento',
         )
-    
+
     hora_local = datetime.now()
 
     if hora_local.date() > agendamento.data:
@@ -112,7 +112,7 @@ def create_agendamento(
     return return_novo_agendamento
 
 
-@router.get('/', response_model=list[list[AgendamentoOut]])
+@router.get('/todos_agendamentos', response_model=list[AgendamentoOut])
 def list_agendamentos(session: T_Session, current_user: T_CurrentUser):
     if current_user.perfil != 'admin':
         raise HTTPException(
@@ -124,29 +124,30 @@ def list_agendamentos(session: T_Session, current_user: T_CurrentUser):
         Agendamento.data, Agendamento.inicio
     )
 
+    return agendamentos
+
+
+@router.get('/agendamentos_futuros', response_model=list[AgendamentoOut])
+def get_agendamentos_futuros(current_user: T_CurrentUser, session: T_Session):
+    agendamentos = (
+        session.query(Agendamento)
+        .where(Agendamento.id_usuario == current_user.id)
+        .order_by(Agendamento.data, Agendamento.inicio)
+    )
+
+    gmt_local = datetime.now()
     return_agendamentos = []
-    agendamentos_futuros = []
-    agendamentos_passados = []
+
     for agendamento in agendamentos:
         data_local, inicio_local, fim_local = utc_to_gmt(
             agendamento.data, agendamento.inicio, agendamento.fim
         )
 
-        data, inicio, fim = format_data(
-            data_local, inicio_local, fim_local
-        )
+        data, inicio, fim = format_data(data_local, inicio_local, fim_local)
 
-        if agendamento.data > (datetime.now()).date():
-            agendamentos_futuros.append({
-                'id': agendamento.id,
-                'id_quadra': agendamento.id_quadra,
-                'id_usuario': agendamento.id_usuario,
-                'data': data,
-                'inicio': inicio,
-                'fim': fim,
-            })
-        else:
-            agendamentos_passados.append({
+        # verificando se o horário ja passou
+        if data_local > gmt_local.date():
+            return_agendamentos.append({
                 'id': agendamento.id,
                 'id_quadra': agendamento.id_quadra,
                 'id_usuario': agendamento.id_usuario,
@@ -155,8 +156,18 @@ def list_agendamentos(session: T_Session, current_user: T_CurrentUser):
                 'fim': fim,
             })
 
-    return_agendamentos.append(agendamentos_passados)
-    return_agendamentos.append(agendamentos_futuros)
+        # verificando se a data é a mesma
+        if data_local == gmt_local.date():
+            if inicio_local >= gmt_local.time():
+                return_agendamentos.append({
+                    'id': agendamento.id,
+                    'id_quadra': agendamento.id_quadra,
+                    'id_usuario': agendamento.id_usuario,
+                    'data': data,
+                    'inicio': inicio,
+                    'fim': fim,
+                })
+
     return return_agendamentos
 
 
