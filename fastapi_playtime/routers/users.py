@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from fastapi_playtime.database import get_session
 from fastapi_playtime.models.user import User
+from fastapi_playtime.routers.agendamento import get_agendamentos_futuros
 from fastapi_playtime.schemas.comum import Message
 from fastapi_playtime.schemas.user import UserCreate, UserList, UserPublic
 from fastapi_playtime.security import get_current_user, get_password_hash
@@ -93,12 +94,15 @@ def update_user(
     return current_user
 
 
-@router.delete('/{user_id}', response_model=Message)
-def delete_user(current_user: T_CurrentUser, session: T_Session, user_id: int):
-    if current_user.id != user_id:
+@router.delete('/', response_model=Message)
+def delete_user(current_user: T_CurrentUser, session: T_Session):
+        
+    agendamentos_futuros = get_agendamentos_futuros(current_user=current_user, session=session)
+    
+    if agendamentos_futuros:
         raise HTTPException(
-            status_code=HTTPStatus.FORBIDDEN,
-            detail='Not enough permission',
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail='Cancele seus agendamentos antes de excluir seu usuário'
         )
 
     session.delete(current_user)

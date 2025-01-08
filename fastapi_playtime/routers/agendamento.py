@@ -171,6 +171,107 @@ def get_agendamentos_futuros(current_user: T_CurrentUser, session: T_Session):
     return return_agendamentos
 
 
+@router.get('/todos_agendamentos_futuros', response_model=list[AgendamentoOut])
+def get_todos_agendamentos_futuros(current_user: T_CurrentUser, session: T_Session):
+    if current_user.perfil != 'admin':
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail='Somente usuários podem ver todos agendamentos'
+        )
+        
+    agendamentos = (
+        session.query(Agendamento)
+        .order_by(Agendamento.data, Agendamento.inicio)
+    )
+    
+    gmt_local = datetime.now()
+    return_agendamentos = []
+
+    for agendamento in agendamentos:
+        data_local, inicio_local, fim_local = utc_to_gmt(
+            agendamento.data, agendamento.inicio, agendamento.fim
+        )
+
+        data, inicio, fim = format_data(data_local, inicio_local, fim_local)
+
+        # verificando se o horário ja passou
+        if data_local > gmt_local.date():
+            return_agendamentos.append({
+                'id': agendamento.id,
+                'id_quadra': agendamento.id_quadra,
+                'id_usuario': agendamento.id_usuario,
+                'data': data,
+                'inicio': inicio,
+                'fim': fim,
+            })
+
+        # verificando se a data é a mesma
+        if data_local == gmt_local.date():
+            if inicio_local >= gmt_local.time():
+                return_agendamentos.append({
+                    'id': agendamento.id,
+                    'id_quadra': agendamento.id_quadra,
+                    'id_usuario': agendamento.id_usuario,
+                    'data': data,
+                    'inicio': inicio,
+                    'fim': fim,
+                })
+
+    return return_agendamentos
+
+
+@router.get('/agendamentos_futuros_quadra', response_model=list[AgendamentoOut])
+def get_agendamentos_futuros_quadra(
+    current_user: T_CurrentUser, session: T_Session, quadra_id: int
+):
+    if current_user.perfil != 'admin':
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail='Somente administradores podem ver horários das quadras'
+        )
+    
+    agendamentos = (
+        session.query(Agendamento)
+        .where(Agendamento.id_quadra == quadra_id)
+        .order_by(Agendamento.data, Agendamento.inicio)
+    )
+    
+    gmt_local = datetime.now()
+    return_agendamentos = []
+    
+    for agendamento in agendamentos:
+        data_local, inicio_local, fim_local = utc_to_gmt(
+            agendamento.data, agendamento.inicio, agendamento.fim
+        )
+
+        data, inicio, fim = format_data(data_local, inicio_local, fim_local)
+
+        # verificando se o horário ja passou
+        if data_local > gmt_local.date():
+            return_agendamentos.append({
+                'id': agendamento.id,
+                'id_quadra': agendamento.id_quadra,
+                'id_usuario': agendamento.id_usuario,
+                'data': data,
+                'inicio': inicio,
+                'fim': fim,
+            })
+
+        # verificando se a data é a mesma
+        if data_local == gmt_local.date():
+            if inicio_local >= gmt_local.time():
+                return_agendamentos.append({
+                    'id': agendamento.id,
+                    'id_quadra': agendamento.id_quadra,
+                    'id_usuario': agendamento.id_usuario,
+                    'data': data,
+                    'inicio': inicio,
+                    'fim': fim,
+                })
+
+    return return_agendamentos
+
+
 @router.get('/{agendamento_id}', response_model=AgendamentoOut)
 def get_agendamento(agendamento_id: int, session: T_Session):
     agendamento = (
