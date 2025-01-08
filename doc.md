@@ -191,7 +191,6 @@
 - É necessário estar logado e ter perfil admin
 - Exclui a quadra caso não tenha nenhum agendamento futuro
 - Possiveis retornos:
-    - Possiveis retornos:
     - 204 - No Content (sucesso)
     - 401 - Not authenticated (caso não esteja logado)
     - 401 - Unauthorized (caso o perfil não seja admin)
