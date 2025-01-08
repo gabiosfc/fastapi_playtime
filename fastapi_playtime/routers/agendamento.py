@@ -285,9 +285,9 @@ def get_agendamento(agendamento_id: int, session: T_Session):
             detail='Agendamento não encontrado',
         )
 
-    inicio_local, fim_local = utc_to_gmt(agendamento.inicio, agendamento.fim)
+    data_local, inicio_local, fim_local = utc_to_gmt(agendamento.data, agendamento.inicio, agendamento.fim)
 
-    data, inicio, fim = format_data(agendamento.data, inicio_local, fim_local)
+    data, inicio, fim = format_data(data_local, inicio_local, fim_local)
 
     return_agendamento = {
         'id': agendamento.id,
