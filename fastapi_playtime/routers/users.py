@@ -71,11 +71,11 @@ def read_users(
 
 @router.get('/{user_id}', response_model=UserPublic)
 def get_user_id(session: T_Session, current_user: T_CurrentUser, user_id: int):
-    if current_user.perfil != 'admin':
-        raise HTTPException(
-            status_code=HTTPStatus.FORBIDDEN,
-            detail='Somente administradores podem ver detalhes do usuário',
-        )
+    # if current_user.perfil != 'admin':
+    #     raise HTTPException(
+    #         status_code=HTTPStatus.FORBIDDEN,
+    #         detail='Somente administradores podem ver detalhes do usuário',
+    #     )
 
     user_db = session.query(User).where(User.id == user_id).first()
 

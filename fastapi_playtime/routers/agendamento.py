@@ -76,7 +76,7 @@ def create_agendamento(
         .filter(
             Agendamento.id_quadra == agendamento.id_quadra,
             Agendamento.data == data,
-            Agendamento.inicio < fim_utc,
+            Agendamento.inicio <= fim_utc,
             Agendamento.fim > inicio_utc,
         )
         .first()
