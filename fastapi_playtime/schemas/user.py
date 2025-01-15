@@ -28,6 +28,18 @@ class UserPublic(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class UserPublicWithToken(BaseModel):
+    id: int
+    nome: str
+    cpf: str
+    email: EmailStr
+    access_token: str
+    token_type: str
+
+    # Configuração para permitir conversão automática de atributos do modelo
+    model_config = ConfigDict(from_attributes=True)
+
+
 class UserList(BaseModel):
     users: List[UserPublic]
 
