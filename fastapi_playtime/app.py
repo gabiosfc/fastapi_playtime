@@ -7,8 +7,10 @@ from fastapi_playtime.database import engine
 from fastapi_playtime.models.user import table_registry
 from fastapi_playtime.routers import (
     agendamento,
+    agendamentos_nomeados,
     auth,
     current_user,
+    horarios_disponiveis,
     quadra,
     users,
 )
@@ -28,11 +30,13 @@ app.add_middleware(
     allow_headers=['*'],
 )
 
-app.include_router(agendamento.router)
-app.include_router(auth.router)
 app.include_router(users.router)
-app.include_router(current_user.router)
+app.include_router(auth.router)
 app.include_router(quadra.router)
+app.include_router(agendamento.router)
+app.include_router(agendamentos_nomeados.router)
+app.include_router(current_user.router)
+app.include_router(horarios_disponiveis.router)
 
 
 @app.get('/', status_code=HTTPStatus.OK)

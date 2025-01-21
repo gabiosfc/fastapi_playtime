@@ -69,6 +69,25 @@ def read_users(
     return {'users': users}
 
 
+@router.get('/{user_id}', response_model=UserPublic)
+def get_user_id(session: T_Session, current_user: T_CurrentUser, user_id: int):
+    # if current_user.perfil != 'admin':
+    #     raise HTTPException(
+    #         status_code=HTTPStatus.FORBIDDEN,
+    #         detail='Somente administradores podem ver detalhes do usuário',
+    #     )
+
+    user_db = session.query(User).where(User.id == user_id).first()
+
+    if not user_db:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail='Usuário não encontrado',
+        )
+
+    return user_db
+
+
 @router.put('/{user_id}', response_model=UserPublic)
 def update_user(
     current_user: T_CurrentUser,
@@ -96,13 +115,14 @@ def update_user(
 
 @router.delete('/', response_model=Message)
 def delete_user(current_user: T_CurrentUser, session: T_Session):
-        
-    agendamentos_futuros = get_agendamentos_futuros(current_user=current_user, session=session)
-    
+    agendamentos_futuros = get_agendamentos_futuros(
+        current_user=current_user, session=session
+    )
+
     if agendamentos_futuros:
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail='Cancele seus agendamentos antes de excluir seu usuário'
+            detail='Cancele seus agendamentos antes de excluir seu usuário',
         )
 
     session.delete(current_user)

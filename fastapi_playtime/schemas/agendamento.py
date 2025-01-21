@@ -47,3 +47,17 @@ class AgendamentoOut(AgendamentoBase):
 
     class Config:
         orm_mode = True
+
+
+class AgendamentoNomeado(AgendamentoBase):
+    id: int
+    id_quadra: int
+    nome_quadra: str
+    id_usuario: int
+    nome_usuario: str
+    data: date
+    inicio: time
+    fim: time
+
+    class Config:
+        orm_mode = True

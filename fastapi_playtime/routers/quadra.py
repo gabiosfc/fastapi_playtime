@@ -7,7 +7,9 @@ from sqlalchemy.orm import Session
 from fastapi_playtime.database import get_session
 from fastapi_playtime.models.quadra import Quadra
 from fastapi_playtime.models.user import User
-from fastapi_playtime.routers.agendamento import get_agendamentos_futuros_quadra
+from fastapi_playtime.routers.agendamento import (
+    get_agendamentos_futuros_quadra,
+)
 from fastapi_playtime.schemas.quadra import QuadraCreate, QuadraOut
 from fastapi_playtime.security import get_current_user
 
@@ -55,7 +57,7 @@ def list_quadras(session: T_Session):
 
 
 @router.get('/{quadra_id}', response_model=QuadraOut)
-def get_quadra(quadra_id: int, db: Session = Depends(get_session)):
+def get_quadra_id(quadra_id: int, db: T_Session):
     quadra = db.query(Quadra).filter(Quadra.id == quadra_id).first()
     if not quadra:
         raise HTTPException(status_code=404, detail='Quadra não encontrada')
@@ -110,15 +112,13 @@ def delete_quadra(
         )
 
     agendamentos_futuros = get_agendamentos_futuros_quadra(
-        current_user=current_user,
-        session=session,
-        quadra_id=quadra_id
+        current_user=current_user, session=session, quadra_id=quadra_id
     )
-    
+
     if agendamentos_futuros:
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail='Essa quadra possuí agendamentos futuros e não pode ser excluída'
+            detail='Essa quadra tem agendamentos portanto ser excluída',
         )
 
     session.delete(quadra)
