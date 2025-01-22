@@ -23,6 +23,10 @@ def get_horarios_quadra(session: T_Session, quadra_id: int, data: str):
         format = datetime.strptime(hour, '%H')
         return format.time()
 
+    def format_datetime(data):
+        date_obj = datetime.strptime(data, '%d%m%Y')
+        return date_obj.date()
+
     quadra = get_quadra_id(quadra_id=quadra_id, db=session)
 
     if not quadra:
@@ -31,9 +35,22 @@ def get_horarios_quadra(session: T_Session, quadra_id: int, data: str):
             detail='Quadra não encontrada',
         )
 
-    min_hour = 14
-    max_hour = 22
+    date = format_datetime(data)
 
+    if date < datetime.now().date():
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail='Insira uma data futura'
+        )
+
+    if date == datetime.now().date():
+        min_hour = (datetime.now().hour) + 1
+        if min_hour > 21:
+            return []
+
+    if date > datetime.now().date():
+        min_hour = 14
+
+    max_hour = 22
     hour_list = [format_hour(str(x)) for x in range(min_hour, max_hour + 1)]
     gmt_midnight = format_hour('21')
 
