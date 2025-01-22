@@ -114,15 +114,17 @@ def create_agendamento(
 
 @router.get('/todos_agendamentos', response_model=list[AgendamentoOut])
 def list_agendamentos(session: T_Session, current_user: T_CurrentUser):
-    if current_user.perfil != 'admin':
-        raise HTTPException(
-            HTTPStatus.UNAUTHORIZED,
-            detail='Somente administradores podem ver todos agendamentos',
+    if current_user.perfil == 'admin':
+        agendamentos = session.query(Agendamento).order_by(
+            Agendamento.data, Agendamento.inicio
         )
 
-    agendamentos = session.query(Agendamento).order_by(
-        Agendamento.data, Agendamento.inicio
-    )
+    if current_user.perfil != 'admin':
+        agendamentos = (
+            session.query(Agendamento)
+            .where(Agendamento.id_usuario == current_user.id)
+            .order_by(Agendamento.data, Agendamento.inicio)
+        )
 
     return_agendamentos = []
 
@@ -193,40 +195,21 @@ def get_agendamentos_futuros(current_user: T_CurrentUser, session: T_Session):
 def get_todos_agendamentos_futuros(
     current_user: T_CurrentUser, session: T_Session
 ):
-    if current_user.perfil != 'admin':
-        raise HTTPException(
-            status_code=HTTPStatus.UNAUTHORIZED,
-            detail='Somente usuários podem ver todos agendamentos',
-        )
+    def verify_time(list_agendamentos: list[Agendamento]):
+        gmt_local = datetime.now()
+        return_agendamentos = []
 
-    agendamentos = session.query(Agendamento).order_by(
-        Agendamento.data, Agendamento.inicio
-    )
+        for agendamento in list_agendamentos:
+            data_local, inicio_local, fim_local = utc_to_gmt(
+                agendamento.data, agendamento.inicio, agendamento.fim
+            )
 
-    gmt_local = datetime.now()
-    return_agendamentos = []
+            data, inicio, fim = format_data(
+                data_local, inicio_local, fim_local
+            )
 
-    for agendamento in agendamentos:
-        data_local, inicio_local, fim_local = utc_to_gmt(
-            agendamento.data, agendamento.inicio, agendamento.fim
-        )
-
-        data, inicio, fim = format_data(data_local, inicio_local, fim_local)
-
-        # verificando se o horário ja passou
-        if data_local > gmt_local.date():
-            return_agendamentos.append({
-                'id': agendamento.id,
-                'id_quadra': agendamento.id_quadra,
-                'id_usuario': agendamento.id_usuario,
-                'data': data,
-                'inicio': inicio,
-                'fim': fim,
-            })
-
-        # verificando se a data é a mesma
-        if data_local == gmt_local.date():
-            if inicio_local >= gmt_local.time():
+            # verificando se o horário ja passou
+            if data_local > gmt_local.date():
                 return_agendamentos.append({
                     'id': agendamento.id,
                     'id_quadra': agendamento.id_quadra,
@@ -235,6 +218,34 @@ def get_todos_agendamentos_futuros(
                     'inicio': inicio,
                     'fim': fim,
                 })
+
+            # verificando se a data é a mesma
+            if data_local == gmt_local.date():
+                if inicio_local >= gmt_local.time():
+                    return_agendamentos.append({
+                        'id': agendamento.id,
+                        'id_quadra': agendamento.id_quadra,
+                        'id_usuario': agendamento.id_usuario,
+                        'data': data,
+                        'inicio': inicio,
+                        'fim': fim,
+                    })
+
+        return return_agendamentos
+
+    if current_user.perfil == 'admin':
+        agendamentos = session.query(Agendamento).order_by(
+            Agendamento.data, Agendamento.inicio
+        )
+
+    if current_user.perfil != 'admin':
+        agendamentos = (
+            session.query(Agendamento)
+            .where(Agendamento.id_usuario == current_user.id)
+            .order_by(Agendamento.data, Agendamento.inicio)
+        )
+
+    return_agendamentos = verify_time(list_agendamentos=agendamentos)
 
     return return_agendamentos
 
